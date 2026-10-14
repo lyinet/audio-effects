@@ -12,3 +12,7 @@ __pycache__/
 *.pyc
 .DS_Store
 !.gitkeep
+
+# local voice lock samples (keep recipe in docs only)
+voice-refs/
+narration-audio/

@@ -46,6 +46,8 @@ Read exactly: "Next, open the terminal and run npm install. Wait until dependenc
 In the warm, clear, medium-paced voice of a [30–40]-year-old [gender] coding instructor with [Mandarin / American English], calm educational tone, read the following: '[SCRIPT]'
 ```
 
+**Long-form voice consistency:** Pure text_prompt without `references` samples a new timbre each request. For multi-segment lessons, lock with `references[{audio_data|audio_url|speaker}]` + `@音频1` (see `docs/VOICE_CONSISTENCY.md`). Official product copy: reference-audio extension keeps character voice stable across ~2 min generations / continuations.
+
 **Anti-patterns (Seed Audio):**
 - Do **not** put style directions inside the quoted script (model may speak them).
 - Do **not** request music/SFX for tutorial VO — they compete with screen audio.

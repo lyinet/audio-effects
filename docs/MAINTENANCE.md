@@ -5,6 +5,8 @@
 | 路径 | 改动触发 |
 |------|----------|
 | `docs/TTS_PROMPTING_BEST_PRACTICES.md` | 官方 API / 提示词规范变更、实测得到更好 style |
+| `docs/VOICE_CONSISTENCY.md` | 参考音色 / 锁声流程 / `@音频N` 规则变更 |
+| `docs/API_SEED_AUDIO.md` | openspeech 字段或互斥规则变更 |
 | `prompts/*` | 默认旁白风格或 Seed 干声模板调整 |
 | `skills/code-video-narration-tts/SKILL.md` | 合成流程、切块上限、默认 provider / 音色变更 |
 | `CHANGELOG.md` | **每次**有用户可见改动时追加条目 |
@@ -32,6 +34,7 @@
 - 中文短旁白、英文短旁白各合成一段，听吐字与语速。
 - 同一脚本分别走 Seed / Qwen / Gemini，对比 style 是否生效且未被念出。
 - 多段后 ffmpeg concat，用 ffprobe 核对总时长。
+- 长片：用同一 `--ref-audio` 或 `--speaker` 跑两段，听是否同声；锁文件须 ≤30s。
 
 ## 实测端点（2026-10-14）
 

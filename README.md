@@ -9,12 +9,14 @@
 ```
 docs/
   API_SEED_AUDIO.md                 # openspeech 官方接口对齐说明
+  VOICE_CONSISTENCY.md              # 长片参考音色锁一致性（必读）
   TTS_PROMPTING_BEST_PRACTICES.md   # 三家模型提示词调研与对照表
   MAINTENANCE.md                    # 维护说明
 prompts/                            # 可直接粘贴的旁白 style / 场景模板
-scripts/synthesize.py               # Seed Audio 干声合成 CLI
+scripts/synthesize.py               # Seed Audio 干声合成 CLI（含 --ref-audio）
 skills/
   code-video-narration-tts/SKILL.md # Cursor / Grok Bot 可复用技能
+dist/code-video-narration-tts-claude.zip
 .env.example
 CHANGELOG.md
 ```
@@ -33,10 +35,24 @@ python scripts/synthesize.py --text "接下来我们打开终端，输入 npm in
 
 需要字级时间戳（对齐视频）时加 `--subtitle`。固定豆包 2.0 音色时加 `--speaker <音色ID>`。
 
-官方字段说明见 [`docs/API_SEED_AUDIO.md`](docs/API_SEED_AUDIO.md)。
+### 长视频：锁定音色一致性
+
+纯文本多段会**换声**。长片请先锁一版音色，再每段带同一参考：
+
+```bash
+# ① 短句生成锁文件（建议 ≤20s）
+python scripts/synthesize.py --text "大家好，这是本片统一的教学旁白音色。" \
+  --save-as-voice-lock ./voice-refs/project-voice.mp3 --speech-rate -15
+
+# ② 全片各段用同一锁 + 同一语速，最后拼接
+python scripts/synthesize.py --file script.txt \
+  --ref-audio ./voice-refs/project-voice.mp3 --speech-rate -15 --concat
+```
+
+完整说明（字段、`@音频N`、反模式、ffmpeg）：[`docs/VOICE_CONSISTENCY.md`](docs/VOICE_CONSISTENCY.md)。  
+官方字段：[`docs/API_SEED_AUDIO.md`](docs/API_SEED_AUDIO.md)。
 
 ### 手工流程
-
 
 1. 准备旁白脚本（按场景分段）。
 2. 配置密钥（勿提交到仓库）：
@@ -56,7 +72,8 @@ python scripts/synthesize.py --text "接下来我们打开终端，输入 npm in
 1. **风格与正文分离**——指令字段放风格，念稿字段只放要说的话。
 2. **代码视频用干声**——不要默认加音乐/音效。
 3. **语言跟脚本**——不要整篇强行指定错误语言。
-4. **密钥不出库**。
+4. **长片锁音色**——多段必须同一 `--ref-audio` 或同一 `--speaker`。
+5. **密钥不出库**。
 
 ## 许可证
 

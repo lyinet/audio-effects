@@ -2,6 +2,20 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，版本号采用语义化版本。
 
+## [0.3.0] - 2026-10-14
+
+### Added
+
+- 长片音色一致性文档：`docs/VOICE_CONSISTENCY.md`（参考音频锁 / 固定 speaker / 反模式 / ffmpeg）。
+- CLI：`--ref-audio`、`--ref-url`、`--save-as-voice-lock`、`--concat`；参考资源按官方写入 `references[]`，prompt 自动含 `@音频1`。
+- 带参考锁的干声模板：`prompts/seed-audio-dry-ref-zh.txt`、`prompts/seed-audio-dry-ref-en.txt`。
+
+### Changed
+
+- `docs/API_SEED_AUDIO.md`：澄清 `speaker`/`audio_data`/`audio_url` 在 `references[]` 内互斥，并补充参考音频 JSON 示例。
+- `skills/code-video-narration-tts/SKILL.md`、README：长片默认走音色锁流程。
+- 重建 `dist/code-video-narration-tts-claude.zip`。
+
 ## [0.2.1] - 2026-10-14
 
 ### Added

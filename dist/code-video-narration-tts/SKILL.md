@@ -4,7 +4,7 @@ description: >
   Use after a Claude Opus (or similar) code-explanation video is drafted, to
   synthesize dry educational narration audio via Volcengine openspeech Seed
   Audio 1.0 (optional Qwen/Gemini). Triggers: 旁白, TTS, SeedAudio, narration,
-  配音, voiceover for coding tutorials.
+  配音, voiceover, 音色一致 for coding tutorials.
 ---
 
 # Code video narration TTS
@@ -14,7 +14,7 @@ Generate **dry** tutorial voiceover (no BGM/SFX) for coding videos. Default prov
 ## When to use
 
 - Opus / coding video scenes are ready and you have a narration script.
-- User asks for 旁白 / TTS / SeedAudio / voiceover.
+- User asks for 旁白 / TTS / SeedAudio / voiceover / consistent voice across segments.
 
 ## Official API (must follow)
 
@@ -23,75 +23,58 @@ Generate **dry** tutorial voiceover (no BGM/SFX) for coding videos. Default prov
 - Body:
   - `model`: `seed-audio-1.0` (required)
   - `text_prompt`: ≤ **3000** chars (required)
-  - `speaker` | `audio_data` | `audio_url`: mutually exclusive
-  - Do not mix image refs with audio refs
-  - In prompts, reference clips as `@音频1` … `@音频3`
+  - `references[]`: each item exactly one of `speaker` | `audio_data` | `audio_url` (or image fields; do not mix image with audio)
+  - In prompts, cite refs as `@音频1` … `@音频3` (order matches `references`)
+  - Ref clip limits: ≤30s, ≤10MB each; max 3
   - `audio_config`: `format` (prefer `mp3`), `sample_rate`, `speech_rate` (-50..100), `loudness_rate`, `pitch_rate`, `enable_subtitle`
 - Response: `audio` (base64) and/or `url` (~2h TTL); bill on `original_duration` (max **120s**); debug with `X-Tt-Logid`
-- Auth key from Volcengine **new** console API Key page (not legacy App-Id pair)
 
-Env: `BYTEPLUS_SEED_API_KEY` or `VOLC_TTS_API_KEY`. Optional `SEED_TTS_URL` (default openspeech URL above).
+Env: `BYTEPLUS_SEED_API_KEY` or `VOLC_TTS_API_KEY`. Optional `SEED_TTS_URL`.
+
+## Voice consistency (long videos)
+
+Pure text without `references` **re-samples timbre every request** → multi-segment drift.
+
+**Recommended lock workflow:**
+
+```bash
+python scripts/synthesize.py --text "Short lock line for this project." \
+  --save-as-voice-lock ./voice-refs/project-voice.mp3 --speech-rate -15
+python scripts/synthesize.py --file script.txt \
+  --ref-audio ./voice-refs/project-voice.mp3 --speech-rate -15 --concat
+```
+
+Alternative: same `--speaker=<Doubao 2.0 or clone ID>` on every chunk (no ref audio).
+
+Keep identical `speech_rate` / `pitch_rate` / `loudness_rate` across chunks. Details: `references/VOICE_CONSISTENCY.md`.
 
 ## Default narration strategy
 
 1. Keep **style outside** quoted lines; spoken text only inside `Read exactly: "..."`.
 2. Force dry VO: no music, SFX, or ambience.
-3. Teaching pace: try `speech_rate=-15`.
+3. Teaching pace: try `speech_rate=-15` (same value for all segments).
 4. For A/V sync: `enable_subtitle=true` and keep word timestamps.
-5. Fixed Doubao 2.0 timbre: pass `speaker=<voice_id>` only (no ref audio).
-6. Preprocess script: strip stage directions/markdown; rewrite code for speech (`npm install` → `N-P-M install`).
+5. Preprocess script: strip stage directions/markdown; rewrite code for speech (`npm install` → `N-P-M install`).
 
 ### Dry prompt templates
 
-Chinese — also in `prompts/seed-audio-dry-zh.txt`:
-
-```text
-Clean dry studio narration only. No music, no sound effects, no ambience bed.
-Language: Chinese.
-Narrator: adult, clear Mandarin, warm professional coding instructor, medium-low pitch, calm measured pace, precise diction.
-Read exactly: "{SCRIPT}"
-```
-
-English — `prompts/seed-audio-dry-en.txt`:
-
-```text
-Clean dry studio narration only. No music, no sound effects, no ambience.
-Language: English.
-Narrator: adult, clear American English, warm professional coding instructor, medium pace, crisp consonants, calm and confident.
-Read exactly: "{SCRIPT}"
-```
-
-Shared style strings (map into other providers' instruction fields): see `prompts/qwen-*.txt`, `prompts/gemini-*.txt`, `prompts/doubao-context-*.txt`.
+See `prompts/seed-audio-dry-zh.txt` / `seed-audio-dry-en.txt`. With a reference lock use `seed-audio-dry-ref-*.txt` (or let the CLI inject `@音频1`).
 
 ## Run (preferred)
-
-From this skill folder (or repo root that contains `scripts/`):
 
 ```bash
 pip install requests
 export BYTEPLUS_SEED_API_KEY='...'
 python scripts/synthesize.py --text "接下来我们打开终端，输入 npm install。" --speech-rate -15
-python scripts/synthesize.py --file script.txt --out-dir ./narration-audio --subtitle
+python scripts/synthesize.py --file script.txt --ref-audio ./voice-refs/project-voice.mp3 --concat
 ```
 
-Outputs: `NN.mp3`, `NN.mp3.json`, `manifest.json`.
+Outputs: `NN.mp3`, `NN.mp3.json`, `manifest.json`, optional `narration-full.mp3`.
 
-If you cannot run shell, call the same JSON HTTP API yourself and save the audio.
-
-## Opus video handoff
-
-1. Accept segmented script with scene ids.
-2. One request per segment if near 120s / 3000 chars.
-3. Deliver audio + manifest (durations / subtitles); do not re-edit video unless asked.
-4. Never commit API keys.
-
-## Optional providers
-
-Qwen / Gemini prompting notes: `references/TTS_PROMPTING_BEST_PRACTICES.md`. Keys: `DASHSCOPE_API_KEY`, `GEMINI_API_KEY`.
-
-## Done when
+## Done checklist
 
 - [ ] openspeech + `seed-audio-1.0`
-- [ ] dry template; style not spoken aloud
-- [ ] under 3000 chars / 120s per call (or split)
-- [ ] audio + manifest delivered; secrets not written to files
+- [ ] dry template; style not spoken
+- [ ] under 3000 chars / 120s per request; long script split
+- [ ] multi-segment: same `--ref-audio` or same `--speaker`
+- [ ] deliver audio + manifest; no secrets committed

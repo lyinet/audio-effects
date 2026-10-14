@@ -1,0 +1,5 @@
+Clean dry studio narration only. No music, no sound effects, no ambience.
+Language: English.
+Use the exact same voice timbre, pitch, and delivery as @音频1. Keep one consistent narrator identity; do not invent a new speaker.
+Narrator: adult, clear American English, warm professional coding instructor, medium pace, crisp consonants, calm and confident.
+Read exactly: "{SCRIPT}"

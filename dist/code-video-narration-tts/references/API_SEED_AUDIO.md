@@ -1,6 +1,6 @@
 # Seed Audio 1.0 HTTP 非流式接口（官方对齐）
 
-来源：火山引擎 / openspeech 开发文档（用户提供，2026-10-14 对齐入库）。
+来源：火山引擎 / openspeech 开发文档（用户提供，2026-10-14 对齐入库；参考音色字段按 SDK / 第三方镜像文档复核）。
 
 ## 端点
 
@@ -15,13 +15,25 @@
 | 字段 | 必选 | 说明 |
 |------|------|------|
 | `model` | 是 | 当前：`seed-audio-1.0`（多语种 + 时间轴自然语言控制） |
-| `text_prompt` | 是 | 提示词或待合成文本，**≤3000 字符** |
-| `references` | 否 | 参考资源列表；纯文本模式不传 |
-| `speaker` | 否 | 音色 ID（豆包语音合成 2.0 音色或复刻音色）；与 `audio_data` / `audio_url` **互斥** |
-| `audio_data` / `audio_url` | 否 | 参考音频 Base64 或 URL；与 `speaker` 互斥 |
-| `image_data` / `image_url` | 否 | 参考图片；**不可与音频参考混用** |
+| `text_prompt` | 是 | 提示词或待合成文本，**≤3000 字符**（部分镜像文档写 2048，以控制台/实测为准，本仓库按 3000） |
+| `references` | 否 | 参考资源列表；**纯文本模式不传**。有音频参考时，prompt 内用 `@音频N` |
 | `audio_config` | 否 | 输出配置，见下 |
 | `watermark` | 否 | 显式/隐式水印 |
+
+### `references[]` 每一项
+
+| 字段 | 说明 |
+|------|------|
+| `speaker` | 音色 ID（豆包语音合成 2.0 音色或复刻音色） |
+| `audio_data` | 参考音频 Base64 |
+| `audio_url` | 参考音频 URL |
+| `image_data` / `image_url` | 参考图片 |
+
+**互斥规则（官方）：**
+
+- 每一项内 `speaker` / `audio_data` / `audio_url` **三选一**
+- 音频参考与图片参考 **不可混用**（同一次请求只能选一类）
+- 本仓库早期文档曾把 `speaker`/`audio_data` 写成顶层字段；**正确形状是放进 `references[]`**。CLI `scripts/synthesize.py` 已按此实现。
 
 ### `audio_config`
 
@@ -36,9 +48,38 @@
 
 ### 参考音频规则
 
-- `text_prompt` 内用 `@音频1`、`@音频2`、`@音频3`（与上传顺序严格对应）
+- `text_prompt` 内用 `@音频1`、`@音频2`、`@音频3`（与 `references` 上传顺序严格对应）
 - 最多 3 条，单条 ≤30s、≤10MB；格式 wav/mp3/pcm/ogg_opus
 - 图片最多 1 张，≤10MB；jpeg/png/webp
+- 产品侧能力：基于参考音频做音色复刻 / 延展，用于长音频音色一致（见 [`VOICE_CONSISTENCY.md`](./VOICE_CONSISTENCY.md)）
+
+### 参考音频请求示例
+
+```json
+{
+  "model": "seed-audio-1.0",
+  "text_prompt": "Use the exact same voice timbre and delivery as @音频1. Clean dry studio narration only. No music. Read exactly: \"接下来我们打开终端。\"",
+  "references": [
+    { "audio_data": "<Base64 of voice-lock.mp3>" }
+  ],
+  "audio_config": {
+    "format": "mp3",
+    "sample_rate": 44100,
+    "speech_rate": -15
+  }
+}
+```
+
+固定 speaker：
+
+```json
+{
+  "model": "seed-audio-1.0",
+  "text_prompt": "Match @音频1. ... Read exactly: \"Hello.\"",
+  "references": [{ "speaker": "zh_female_vv_uranus_bigtts" }],
+  "audio_config": { "format": "mp3", "sample_rate": 44100 }
+}
+```
 
 ## 响应体
 
@@ -55,11 +96,23 @@
 
 ## 代码视频旁白推荐用法
 
-1. **纯文本干声**：不传 `references`；`text_prompt` 用干声模板（见 `prompts/seed-audio-dry-*.txt`），台词放在引号内。
-2. **固定音色**：传 `speaker`（豆包 2.0 音色 ID），不要同时传参考音频。
-3. **对齐剪辑**：`enable_subtitle=true`，用返回的 word timestamps 挂到 Opus 分镜。
-4. **语速**：默认 `speech_rate=0`；偏快则设负数（如 `-15`）。
-5. **切段**：单次 ≤120s、`text_prompt` ≤3000 字；长旁白按场景拆请求后 ffmpeg concat。
+1. **纯文本干声**：不传 `references`；`text_prompt` 用干声模板（见 `prompts/seed-audio-dry-*.txt`），台词放在引号内。仅适合短片；**长片多段会漂音色**。
+2. **跨段锁音色（推荐）**：先生成短锁文件，后续每段 `references: [{audio_data}]` + `@音频1`。详见 [`VOICE_CONSISTENCY.md`](./VOICE_CONSISTENCY.md)。
+3. **固定音色**：`references: [{speaker}]`（豆包 2.0 音色 ID），不要同时传参考音频。
+4. **对齐剪辑**：`enable_subtitle=true`，用返回的 word timestamps 挂到 Opus 分镜。
+5. **语速**：默认 `speech_rate=0`；偏快则设负数（如 `-15`）；**全片保持同一值**。
+6. **切段**：单次 ≤120s、`text_prompt` ≤3000 字；长旁白按场景拆请求后 ffmpeg concat。
+
+## CLI
+
+```bash
+# 锁音色
+python scripts/synthesize.py --text "短锁句。" --save-as-voice-lock ./voice-refs/project-voice.mp3 --speech-rate -15
+# 多段 + 参考锁 + 拼接
+python scripts/synthesize.py --file script.txt --ref-audio ./voice-refs/project-voice.mp3 --speech-rate -15 --concat
+# 或固定 speaker
+python scripts/synthesize.py --file script.txt --speaker zh_female_vv_uranus_bigtts --concat
+```
 
 ## 环境变量
 
