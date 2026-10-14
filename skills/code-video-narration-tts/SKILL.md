@@ -37,6 +37,8 @@ description: >-
 
 也可设 `TTS_PROVIDER=...`。
 
+Seed Audio HTTP 默认：`SEED_TTS_URL=https://openspeech.bytedance.com/api/v3/tts/create`（火山/openspeech 密钥）；BytePlus 国际端点需另配对应 key。
+
 ## 密钥
 
 | Provider | 环境变量 |

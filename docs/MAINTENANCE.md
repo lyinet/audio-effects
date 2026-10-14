@@ -32,3 +32,9 @@
 - 中文短旁白、英文短旁白各合成一段，听吐字与语速。
 - 同一脚本分别走 Seed / Qwen / Gemini，对比 style 是否生效且未被念出。
 - 多段后 ffmpeg concat，用 ffprobe 核对总时长。
+
+## 实测端点（2026-10-14）
+
+- 国内 openspeech：`POST https://openspeech.bytedance.com/api/v3/tts/create` + `X-Api-Key` → 对当前 Seed Audio 干声旁白可用。
+- BytePlus `voice.ap-southeast-1.bytepluses.com`：同密钥返回 `Invalid X-Api-Key`，勿当作默认。
+- 默认环境变量：`SEED_TTS_URL=https://openspeech.bytedance.com/api/v3/tts/create`。
