@@ -7,8 +7,11 @@
 | `docs/TTS_PROMPTING_BEST_PRACTICES.md` | 官方 API / 提示词规范变更、实测得到更好 style |
 | `docs/VOICE_CONSISTENCY.md` | 参考音色 / 锁声流程 / `@音频N` 规则变更 |
 | `docs/API_SEED_AUDIO.md` | openspeech 字段或互斥规则变更 |
+| `docs/API_QWEN_TTS.md` | DashScope Qwen TTS 端点 / 600 字限制 / voice |
+| `docs/API_GEMINI_TTS.md` | Gemini Interactions TTS 模型 / style / voice |
 | `prompts/*` | 默认旁白风格或 Seed 干声模板调整 |
 | `skills/code-video-narration-tts/SKILL.md` | 合成流程、切块上限、默认 provider / 音色变更 |
+| `scripts/synthesize.py` / `scripts/providers/` | 合成 CLI、provider 实现 |
 | `scripts/install-claude-skill.py` / `pack-claude-skill.py` | Claude 安装路径、zip 布局、插件清单变更 |
 | `CHANGELOG.md` | **每次**有用户可见改动时追加条目 |
 | `README.md` | 结构、快速开始、默认策略变化时同步 |
@@ -20,7 +23,7 @@
 3. 文档中的模型 ID、音色 ID 是否标注「以控制台为准」。
 4. 更新 `CHANGELOG.md`（Added / Changed / Fixed）。
 5. 推送到 `main`：`git push origin main`（本仓库约定：每次更改都推送）。
-6. 若改了 skill 内容：运行 `python scripts/pack-claude-skill.py`，再推送。
+6. 若改了 skill 内容：运行 `python scripts/pack-claude-skill.py（含 providers/ 与 API_QWEN/GEMINI）`，再推送。
 
 ## 与 Grok Bot 技能同步
 

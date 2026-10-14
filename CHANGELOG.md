@@ -2,6 +2,22 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，版本号采用语义化版本。
 
+## [0.5.0] - 2026-10-14
+
+### Added
+
+- 多 provider CLI：`--provider auto|qwen|gemini|seed`（auto 优先 Qwen → Gemini → Seed）。
+- Qwen（DashScope）HTTP 实现：`qwen3-tts-flash`，单次 ≤600 字自动切段，`--voice` 锁声。
+- Gemini Flash TTS Interactions API：默认 `gemini-3.8-flash-lite-tts` + `Kore`，短 `speech_metadata.style`，~1800 字切段。
+- 文档：`docs/API_QWEN_TTS.md`、`docs/API_GEMINI_TTS.md`；`VOICE_CONSISTENCY.md` 补充 Qwen/Gemini。
+- `scripts/providers/` 模块；`--list-voices`、`--model`、`--style`。
+
+### Changed
+
+- 默认 provider 改为 **auto**（有 DashScope/Gemini 密钥时不再强行走无额度的 Seed）。
+- Seed 专用：`--ref-audio` / `--save-as-voice-lock` / `--subtitle` / `speech_rate`；用在其它 provider 上会明确报错或忽略。
+- `.env.example`、README、SKILL、Claude 包同步至 v0.5.0。
+
 ## [0.4.0] - 2026-10-14
 
 ### Added

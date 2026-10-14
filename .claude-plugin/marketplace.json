@@ -6,8 +6,8 @@
     {
       "name": "code-video-narration-tts",
       "source": "./plugins/code-video-narration-tts",
-      "description": "Seed Audio dry VO + voice-lock for long videos",
-      "version": "0.4.0"
+      "description": "Qwen / Gemini / Seed dry VO with voice consistency",
+      "version": "0.5.0"
     }
   ]
 }

@@ -1,4 +1,6 @@
-# Seed Audio 旁白音色一致性（长视频）
+# 旁白音色一致性（长视频）
+
+> Seed / Qwen / Gemini 锁声方式不同，见下文分节。
 
 > 适用：`seed-audio-1.0` + openspeech `POST /api/v3/tts/create`  
 > 问题：长旁白必须切段（`text_prompt` ≤3000 字、单次 `original_duration` ≤120s），但各段若只靠纯文本风格描述，**每次请求会重新采样音色**，听感会跳变。
@@ -138,3 +140,44 @@ ffmpeg -f concat -safe 0 -i filelist.txt -c copy narration-full.mp3
 - 长片 = 切段合成（每段都带同一锁）+ concat；不是一次生成整片
 
 更多字段见 [`API_SEED_AUDIO.md`](./API_SEED_AUDIO.md)。
+
+
+---
+
+## Qwen（DashScope）：固定 `--voice`
+
+Qwen **不支持** Seed 式参考音频锁。一致性 = **全片同一 `voice` + 同一 `language_type`**。
+
+```bash
+export DASHSCOPE_API_KEY='...'
+python scripts/synthesize.py --provider qwen --voice Cherry --file script.txt --concat
+```
+
+- 单次 ≤ **600** 字符；CLI 自动按句切分后拼接
+- 中途换 `Cherry`→`Serena` 会明显换声
+- 详见 [`API_QWEN_TTS.md`](./API_QWEN_TTS.md)
+
+## Gemini Flash TTS：固定 `--voice` + 短 `style`
+
+Gemini 3.8 一致性靠：
+
+1. 全程同一 `speech_config.voice`（默认 **`Kore`**）
+2. 全程同一短 `speech_metadata.style`（默认 `prompts/gemini-style-*.txt`）
+3. **不要**每段贴长人设 / Director's Notes
+
+```bash
+export GEMINI_API_KEY='...'
+python scripts/synthesize.py --provider gemini --voice Kore --file script.txt --concat
+```
+
+- CLI 约按 **1800** 字符切段（低于 8192 token 上限）
+- Seed 的 `--ref-audio` / `--save-as-voice-lock` 在 Gemini 上会直接报错
+- 详见 [`API_GEMINI_TTS.md`](./API_GEMINI_TTS.md)
+
+## 三方对照
+
+| Provider | 锁声方式 | 切段上限（CLI） |
+|----------|----------|-----------------|
+| Seed Audio | `--ref-audio` 锁文件（路线 A）或固定 `--speaker` | prompt ≤3000 / ≤120s |
+| Qwen | 固定 `--voice`（如 Cherry） | ≤600 字/请求 |
+| Gemini | 固定 `--voice` + 同一短 style | ~1800 字/请求 |

@@ -1,6 +1,6 @@
 {
   "name": "code-video-narration-tts",
-  "version": "0.4.0",
-  "description": "Dry Seed Audio narration TTS for coding tutorial videos (voice-lock route A).",
+  "version": "0.5.0",
+  "description": "Dry narration TTS: Qwen / Gemini / Seed Audio with voice lock.",
   "author": { "name": "lyinet" }
 }
