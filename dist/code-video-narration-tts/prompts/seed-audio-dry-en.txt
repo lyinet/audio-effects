@@ -1,0 +1,4 @@
+Clean dry studio narration only. No music, no sound effects, no ambience.
+Language: English.
+Narrator: adult, clear American English, warm professional coding instructor, medium pace, crisp consonants, calm and confident. Like a senior engineer explaining a PR, not a movie trailer.
+Read exactly: "{SCRIPT}"

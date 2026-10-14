@@ -2,6 +2,12 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，版本号采用语义化版本。
 
+## [0.2.1] - 2026-10-14
+
+### Added
+
+- Claude 安装包：`dist/code-video-narration-tts-claude.zip`（含 SKILL.md、scripts、prompts、API 参考与 INSTALL_CLAUDE.md）。
+
 ## [0.2.0] - 2026-10-14
 
 ### Added
