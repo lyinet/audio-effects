@@ -1,6 +1,7 @@
 # secrets & local audio
 .env
 .env.*
+!.env.example
 *.pem
 narration-audio/
 *.mp3
