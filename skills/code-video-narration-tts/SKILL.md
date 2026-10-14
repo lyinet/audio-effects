@@ -1,126 +1,63 @@
 ---
 name: 代码视频旁白 TTS
 description: >-
-  在代码讲解视频（如 Claude Opus 片子）做完后，用 SeedAudio / Doubao Seed-TTS / Qwen TTS / Gemini
-  Flash TTS 把旁白脚本合成音频，并套用各家优化过的教学旁白提示词时使用。
+  在代码讲解视频（如 Claude Opus 片子）做完后，用火山 openspeech Seed Audio 1.0
+  （及 Qwen / Gemini）把旁白脚本合成音频时使用。
 ---
 # 代码视频旁白 TTS
 
-把旁白脚本文本合成为可挂到代码讲解视频上的音频。默认走 **Seed 系**（优先干声旁白）；可选 Qwen、Gemini。语言跟脚本文本走。
+默认：**Seed Audio 1.0**，端点 `POST https://openspeech.bytedance.com/api/v3/tts/create`，鉴权头 `X-Api-Key`。可选 Qwen / Gemini。语言跟脚本走。
 
-完整提示词库与对照表见仓库 `docs/TTS_PROMPTING_BEST_PRACTICES.md` 与 `prompts/`（若本机有 [audio-effects](https://github.com/lyinet/audio-effects) 检出，优先读那里）。
+仓库实现：`scripts/synthesize.py`；字段说明：`docs/API_SEED_AUDIO.md`；提示词：`prompts/`。
 
 ## 何时运行
 
-- Opus（或其他）片子/分镜已完成，手里有旁白稿。
-- 用户说「配旁白」「TTS」「生成解说」「SeedAudio / Qwen / Gemini 配音」。
+片子/分镜完成，需要旁白；或用户说配旁白 / TTS / SeedAudio。
 
-## 默认策略（最优化）
+## 官方约束（必须遵守）
 
-1. **风格与正文分离**：风格进各家「指令字段」；`text` / 引号内只放要念的字。
-2. **共用旁白风格**（映射到各 provider）：
-   - 中文：`清晰沉稳的教学旁白，中等偏慢语速，吐字清楚，语气耐心专业，适合代码教程。`
-   - 英文：`Calm clear educational narration, medium-slow pace, precise diction, warm professional coding instructor.`
-3. **Seed 产品分流**：
-   - 只要干净念稿 → 优先 **Doubao Seed-TTS 2.0**（`text` + `context_texts[0]`）。
-   - 用户点名 Seed Audio 1.0 → 用 **干声场景模板**（强制 No music / No SFX），台词放在引号内。
-4. **Qwen**：单语脚本显式设 `language_type=Chinese|English`；有 instruct 能力时用 `instructions` + `optimize_instructions=true`；`[serious]` 等标签仅用于 `qwen-audio-3.0-tts-*`。
-5. **Gemini 3.8**：`speech_metadata.style` 放风格；`text` 仅原文 + 可选 `<short pause>`；先试空 style，不够再加短 style 并整轨复用同一字符串。
-6. **念稿预处理**：去掉舞台指示、Markdown、emoji；代码读法改写（`npm install`→「N-P-M install」；`src/index.ts`→「src slash index dot T-S」）。
+- `model`: `seed-audio-1.0`
+- `text_prompt` ≤ **3000** 字符；单次音频 ≤ **120** 秒（`original_duration` 计费）
+- `speaker` / `audio_data` / `audio_url` **三选一**；图片参考不可与音频参考混用
+- 参考音频在 prompt 里写 **`@音频1`…`@音频3`**（与 `references` 顺序一致）
+- `audio_config`：`format`（旁白默认 `mp3`）、`sample_rate`、`speech_rate`（-50..100）、`loudness_rate`、`pitch_rate`、`enable_subtitle`
+- 响应：`audio`（Base64）或 `url`（约 2h）；排障看 `X-Tt-Logid`
 
-## 输入
+## 默认策略
 
-1. 旁白脚本（按场景分段更佳）
-2. `provider`：`seed_tts` | `seed_audio`（默认若未指定：有豆包 TTS 密钥用 `seed_tts`，否则 `seed_audio` 干声）| `qwen` | `gemini` | `edge`
-3. 输出目录（默认 `./narration-audio/`）、格式（默认 `mp3`；Gemini 多为 wav 再转）
-4. 可选音色覆盖
+1. 风格与正文分离：干声方向在引号外，台词在 `Read exactly: "..."` 内（见 `prompts/seed-audio-dry-*.txt`）。
+2. 强制干声：No music / No SFX / No ambience。
+3. 教学旁白可设 `speech_rate=-15` 左右略慢。
+4. 要对齐视频：`enable_subtitle=true`，保存返回的字级时间戳。
+5. 需要固定豆包 2.0 音色：传 `speaker=<音色ID>`，不要同时传参考音频。
+6. 念稿预处理：去舞台指示与 Markdown；`npm install`→「N-P-M install」等（脚本已做基础替换）。
 
-也可设 `TTS_PROVIDER=...`。
+## 推荐执行方式
 
-Seed Audio HTTP 默认：`SEED_TTS_URL=https://openspeech.bytedance.com/api/v3/tts/create`（火山/openspeech 密钥）；BytePlus 国际端点需另配对应 key。
+密钥：`BYTEPLUS_SEED_API_KEY` 或 `VOLC_TTS_API_KEY`。
 
-## 密钥
-
-| Provider | 环境变量 |
-|---|---|
-| seed_tts / seed_audio | `BYTEPLUS_SEED_API_KEY` 或火山/豆包侧 `X-Api-Key`；端点可用 `SEED_TTS_URL` |
-| qwen | `DASHSCOPE_API_KEY` |
-| gemini | `GEMINI_API_KEY` |
-| edge | 无 |
-
-缺密钥就停，用 secret-request 补；永不写入仓库。
-
-## 流程
-
-1. 规范化脚本（去舞台指示；按 provider 切块：Qwen3≈600 字；Seed Audio≈2k–3k / ≤120s；Gemini 按段）
-2. 选语言与风格串（中/英）
-3. 按下方模板组请求 → 逐段落盘 `01.mp3`…
-4. 多段 ffmpeg concat；ffprobe 实测时长
-5. 交付：分段 + 可选整轨 + 清单（provider、模型、音色、style 原文、段数、时长）
-
-## Provider 提示词模板（必用）
-
-### A. Seed Audio 1.0（干声代码旁白）
-
-中文 `text_prompt`：
-
-```text
-Clean dry studio narration only. No music, no sound effects, no ambience bed.
-Language: Chinese.
-Narrator: adult, clear Mandarin, warm professional coding instructor, medium-low pitch, calm measured pace, precise diction.
-Read exactly: "{SCRIPT}"
+```bash
+python scripts/synthesize.py --text "旁白原文" --speech-rate -15 --subtitle
+# 或多段：
+python scripts/synthesize.py --file script.txt --out-dir ./narration-audio
 ```
 
-英文同理，`Language: English`，Narrator 改为 clear American English / senior engineer explaining a PR。
+无仓库检出时，按 `docs/API_SEED_AUDIO.md` 用同一 JSON 自行请求。
 
-要点：方向在引号外；只念引号内；禁止给教程加 BGM/SFX。
+## 其它 provider
 
-### B. Doubao Seed-TTS 2.0（推荐干声）
+- **Qwen / Gemini**：见 `docs/TTS_PROMPTING_BEST_PRACTICES.md`；密钥 `DASHSCOPE_API_KEY` / `GEMINI_API_KEY`。
+- **edge**：仅无密钥调试。
 
-- `text` = 仅旁白
-- `additions.context_texts` = `["清晰沉稳的教学旁白，中等偏慢语速，吐字清楚，语气耐心专业，适合代码教程。"]`（只生效第一个）
-- `explicit_language`：`zh-cn` / `en`
-- 默认音色示例（控制台核实）：中文 `zh_female_vv_uranus_bigtts`；英文 `en_female_dacey_uranus_bigtts`
+## 与 Opus 片子衔接
 
-### C. Qwen
-
-优先 `qwen3-tts-instruct-flash` 或 CosyVoice 3.5（有 instruct 时）：
-
-```text
-instructions = 清晰沉稳的教学旁白，中等偏慢语速，吐字清楚，语气耐心专业，像编程老师讲解代码，不要夸张。
-language_type = Chinese | English
-voice = Cherry | Serena | Elias | Neil
-optimize_instructions = true
-```
-
-仅 `qwen-audio-3.0-tts-*` 才在正文用 `[serious]` / `[curious]`；教程少用笑声类标签。
-
-### D. Gemini 3.8 Flash TTS
-
-- model：`gemini-3.8-flash-tts`（或 lite）
-- `speech_metadata.style`：`calm, clear, medium-paced educational narrator; warm professional coding instructor; precise diction`
-- 中文可用中文 style 短句；**不要**把 style 写进 `text`
-- 音色：`Kore` / `Charon` / `Rasalgethi` / `Sadaltager`；回避 `Fenrir`/`Puck`
-- 工作流：先空 style → 再复用同一短 style
-
-### E. edge 回退
-
-仅调试；正式成片回 Seed/Qwen/Gemini。
-
-## 与 Opus 代码视频衔接
-
-1. 上游：分镜完成 + 旁白稿（带 scene id）
-2. 本 skill：文→音；默认不重剪视频
-3. 文件名对齐场景（`scene-03.mp3`）
-4. 不擅自改措辞；朗读灾难先标出再问
-
-## 失败处理
-
-401/403→密钥/地域；429→单段退避；字段变更→查官方 docs。保留成功段。
+1. 输入带 `scene_id` 的分段旁白。
+2. 输出 `NN.mp3` + `manifest.json`（含 duration / subtitle）。
+3. 用 subtitle 时间戳挂轨道；默认不重剪画面。
 
 ## 完成标准
 
-- [ ] 风格在指令字段，正文无可念舞台指示
-- [ ] 使用了对应语言的优化旁白 style
-- [ ] Seed Audio 路径强制干声
-- [ ] 分段齐全 + 时长实测；密钥未进仓库
+- [ ] 使用 openspeech + `seed-audio-1.0`
+- [ ] 干声模板，风格未被念出
+- [ ] 未超 3000 字 / 120s；超长已切段
+- [ ] 交付音频 + manifest；密钥未入库

@@ -2,6 +2,19 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，版本号采用语义化版本。
 
+## [0.2.0] - 2026-10-14
+
+### Added
+
+- 按火山 openspeech 官方文档对齐：`docs/API_SEED_AUDIO.md`（字段、互斥规则、120s/3000 字、字幕、语速音量音调）。
+- 可运行 CLI：`scripts/synthesize.py`（干声模板、代码读法预处理、`--subtitle` / `--speech-rate` / `--speaker`）。
+- `.env.example`（`BYTEPLUS_SEED_API_KEY` / `VOLC_TTS_API_KEY` 别名）。
+
+### Changed
+
+- 默认路径明确为 **Seed Audio 1.0 + openspeech**（与当前可用密钥一致）；Doubao Seed-TTS 2.0 音色可通过同接口 `speaker` 选用。
+- README 增加一键试听命令。
+
 ## [0.1.1] - 2026-10-14
 
 ### Changed

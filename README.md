@@ -8,15 +8,35 @@
 
 ```
 docs/
+  API_SEED_AUDIO.md                 # openspeech 官方接口对齐说明
   TTS_PROMPTING_BEST_PRACTICES.md   # 三家模型提示词调研与对照表
   MAINTENANCE.md                    # 维护说明
 prompts/                            # 可直接粘贴的旁白 style / 场景模板
+scripts/synthesize.py               # Seed Audio 干声合成 CLI
 skills/
   code-video-narration-tts/SKILL.md # Cursor / Grok Bot 可复用技能
+.env.example
 CHANGELOG.md
 ```
 
 ## 快速开始
+
+### 一键试听（推荐）
+
+```bash
+cp .env.example .env   # 填入 BYTEPLUS_SEED_API_KEY
+export $(grep -v '^#' .env | xargs)
+pip install requests
+python scripts/synthesize.py --text "接下来我们打开终端，输入 npm install。" --speech-rate -15
+# 输出：narration-audio/01.mp3 + manifest.json
+```
+
+需要字级时间戳（对齐视频）时加 `--subtitle`。固定豆包 2.0 音色时加 `--speaker <音色ID>`。
+
+官方字段说明见 [`docs/API_SEED_AUDIO.md`](docs/API_SEED_AUDIO.md)。
+
+### 手工流程
+
 
 1. 准备旁白脚本（按场景分段）。
 2. 配置密钥（勿提交到仓库）：
