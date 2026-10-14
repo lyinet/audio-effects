@@ -1,0 +1,13 @@
+{
+  "name": "audio-effects",
+  "description": "Audio / narration tooling for coding tutorial videos",
+  "owner": { "name": "lyinet" },
+  "plugins": [
+    {
+      "name": "code-video-narration-tts",
+      "source": "./plugins/code-video-narration-tts",
+      "description": "Seed Audio dry VO + voice-lock for long videos",
+      "version": "0.4.0"
+    }
+  ]
+}

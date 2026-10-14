@@ -9,6 +9,7 @@
 | `docs/API_SEED_AUDIO.md` | openspeech 字段或互斥规则变更 |
 | `prompts/*` | 默认旁白风格或 Seed 干声模板调整 |
 | `skills/code-video-narration-tts/SKILL.md` | 合成流程、切块上限、默认 provider / 音色变更 |
+| `scripts/install-claude-skill.py` / `pack-claude-skill.py` | Claude 安装路径、zip 布局、插件清单变更 |
 | `CHANGELOG.md` | **每次**有用户可见改动时追加条目 |
 | `README.md` | 结构、快速开始、默认策略变化时同步 |
 
@@ -19,6 +20,7 @@
 3. 文档中的模型 ID、音色 ID 是否标注「以控制台为准」。
 4. 更新 `CHANGELOG.md`（Added / Changed / Fixed）。
 5. 推送到 `main`：`git push origin main`（本仓库约定：每次更改都推送）。
+6. 若改了 skill 内容：运行 `python scripts/pack-claude-skill.py`，再推送。
 
 ## 与 Grok Bot 技能同步
 

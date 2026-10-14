@@ -4,77 +4,63 @@ description: >
   Use after a Claude Opus (or similar) code-explanation video is drafted, to
   synthesize dry educational narration audio via Volcengine openspeech Seed
   Audio 1.0 (optional Qwen/Gemini). Triggers: 旁白, TTS, SeedAudio, narration,
-  配音, voiceover, 音色一致 for coding tutorials.
+  配音, voiceover, 音色一致 for coding tutorials. 长片须用参考音色锁一致性。
 ---
 
-# Code video narration TTS
+# 代码视频旁白 TTS
 
-Generate **dry** tutorial voiceover (no BGM/SFX) for coding videos. Default provider: **Seed Audio 1.0** on openspeech.
+为代码讲解视频生成**干声**教学旁白（无 BGM/SFX）。默认：**Seed Audio 1.0**（openspeech）。
 
-## When to use
+脚本路径一律用 `${CLAUDE_SKILL_DIR}`，安装后不依赖当前工作目录。
 
-- Opus / coding video scenes are ready and you have a narration script.
-- User asks for 旁白 / TTS / SeedAudio / voiceover / consistent voice across segments.
+## 何时使用
 
-## Official API (must follow)
+- Opus / 代码片子分镜完成，需要旁白
+- 用户说：旁白 / TTS / SeedAudio / 配音 / 音色不一致
 
-- `POST https://openspeech.bytedance.com/api/v3/tts/create`
-- Headers: `X-Api-Key` (required), `X-Api-Request-Id` (UUID recommended)
-- Body:
-  - `model`: `seed-audio-1.0` (required)
-  - `text_prompt`: ≤ **3000** chars (required)
-  - `references[]`: each item exactly one of `speaker` | `audio_data` | `audio_url` (or image fields; do not mix image with audio)
-  - In prompts, cite refs as `@音频1` … `@音频3` (order matches `references`)
-  - Ref clip limits: ≤30s, ≤10MB each; max 3
-  - `audio_config`: `format` (prefer `mp3`), `sample_rate`, `speech_rate` (-50..100), `loudness_rate`, `pitch_rate`, `enable_subtitle`
-- Response: `audio` (base64) and/or `url` (~2h TTL); bill on `original_duration` (max **120s**); debug with `X-Tt-Logid`
+## 官方约束
 
-Env: `BYTEPLUS_SEED_API_KEY` or `VOLC_TTS_API_KEY`. Optional `SEED_TTS_URL`.
+- `POST https://openspeech.bytedance.com/api/v3/tts/create`，头 `X-Api-Key`
+- `model`: `seed-audio-1.0`；`text_prompt` ≤ **3000** 字；单次 ≤ **120** 秒
+- 音色锁在 `references[]`：每项 `speaker` / `audio_data` / `audio_url` **三选一**
+- Prompt 写 `@音频1`…`@音频3`；参考单条 ≤30s / ≤10MB，最多 3 条
+- 详解：`references/API_SEED_AUDIO.md`、`references/VOICE_CONSISTENCY.md`
 
-## Voice consistency (long videos)
+环境变量：`BYTEPLUS_SEED_API_KEY` 或 `VOLC_TTS_API_KEY`。
 
-Pure text without `references` **re-samples timbre every request** → multi-segment drift.
+## 长片锁声（默认路线 A）
 
-**Recommended lock workflow:**
-
-```bash
-python scripts/synthesize.py --text "Short lock line for this project." \
-  --save-as-voice-lock ./voice-refs/project-voice.mp3 --speech-rate -15
-python scripts/synthesize.py --file script.txt \
-  --ref-audio ./voice-refs/project-voice.mp3 --speech-rate -15 --concat
-```
-
-Alternative: same `--speaker=<Doubao 2.0 or clone ID>` on every chunk (no ref audio).
-
-Keep identical `speech_rate` / `pitch_rate` / `loudness_rate` across chunks. Details: `references/VOICE_CONSISTENCY.md`.
-
-## Default narration strategy
-
-1. Keep **style outside** quoted lines; spoken text only inside `Read exactly: "..."`.
-2. Force dry VO: no music, SFX, or ambience.
-3. Teaching pace: try `speech_rate=-15` (same value for all segments).
-4. For A/V sync: `enable_subtitle=true` and keep word timestamps.
-5. Preprocess script: strip stage directions/markdown; rewrite code for speech (`npm install` → `N-P-M install`).
-
-### Dry prompt templates
-
-See `prompts/seed-audio-dry-zh.txt` / `seed-audio-dry-en.txt`. With a reference lock use `seed-audio-dry-ref-*.txt` (or let the CLI inject `@音频1`).
-
-## Run (preferred)
+纯 `text_prompt` 无参考时，每次可能换音色。长片流程：
 
 ```bash
 pip install requests
 export BYTEPLUS_SEED_API_KEY='...'
-python scripts/synthesize.py --text "接下来我们打开终端，输入 npm install。" --speech-rate -15
-python scripts/synthesize.py --file script.txt --ref-audio ./voice-refs/project-voice.mp3 --concat
+
+# ① 短句生成锁文件（建议 8–20s）
+python "${CLAUDE_SKILL_DIR}/scripts/synthesize.py" \
+  --text "大家好，这是本片统一的教学旁白音色锁定样本。" \
+  --save-as-voice-lock ./voice-refs/project-voice.mp3 --speech-rate -15
+
+# ② 各段同一锁 + 同一语速，拼接
+python "${CLAUDE_SKILL_DIR}/scripts/synthesize.py" \
+  --file script.txt \
+  --ref-audio ./voice-refs/project-voice.mp3 --speech-rate -15 --concat
 ```
 
-Outputs: `NN.mp3`, `NN.mp3.json`, `manifest.json`, optional `narration-full.mp3`.
+备选：全程同一 `--speaker=<豆包2.0/复刻ID>`，不要再叠参考音频。
 
-## Done checklist
+## 默认策略
+
+1. 风格在引号外，台词在 `Read exactly: "..."` 内（见 `prompts/seed-audio-dry-*.txt`）
+2. 强制干声：No music / No SFX / No ambience
+3. 教学语速可 `speech_rate=-15`；**全片同一语速/音量/音调**
+4. 对齐视频：`--subtitle`，保存字级时间戳
+5. 念稿预处理：去舞台指示与 Markdown；`npm install`→「N-P-M install」
+
+## 完成标准
 
 - [ ] openspeech + `seed-audio-1.0`
-- [ ] dry template; style not spoken
-- [ ] under 3000 chars / 120s per request; long script split
-- [ ] multi-segment: same `--ref-audio` or same `--speaker`
-- [ ] deliver audio + manifest; no secrets committed
+- [ ] 干声模板；风格未被念出
+- [ ] 未超 3000 字 / 120s；超长已切段
+- [ ] 多段同一 `--ref-audio` 或同一 `--speaker`
+- [ ] 交付音频 + manifest；密钥未入库

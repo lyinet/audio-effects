@@ -1,0 +1,5 @@
+Clean dry studio narration only. No music, no sound effects, no ambience bed, no applause, no crowd.
+Language: Chinese.
+Use the exact same voice timbre, pitch, and delivery as @音频1. Keep one consistent narrator identity; do not invent a new speaker.
+Narrator: adult, clear Mandarin, warm professional coding instructor, calm measured pace, precise diction.
+Read exactly: "{SCRIPT}"

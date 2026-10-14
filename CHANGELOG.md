@@ -2,6 +2,20 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，版本号采用语义化版本。
 
+## [0.4.0] - 2026-10-14
+
+### Added
+
+- Claude 技能 CLI 安装器：`scripts/install-claude-skill.py`（及 `.sh` 包装），支持 `--scope user|project`、`--from` zip/目录、`--force`、`--dry-run`、`--uninstall`。
+- 打包脚本：`scripts/pack-claude-skill.py`；zip 根目录自带安装器，解压即可安装。
+- 可选 Claude 插件：`plugins/code-video-narration-tts/` + 仓库根 `.claude-plugin/marketplace.json`。
+- `INSTALL_CLAUDE.md`：CLI 优先说明，并标明 Claude app / Cowork 不读 `~/.claude/skills/`。
+
+### Changed
+
+- `SKILL.md`（源与 Claude 包）命令示例改用 `${CLAUDE_SKILL_DIR}/scripts/synthesize.py`；长片默认仍为路线 A（锁文件 + `--ref-audio`）。
+- 重建 `dist/code-video-narration-tts-claude.zip`。
+
 ## [0.3.0] - 2026-10-14
 
 ### Added

@@ -1,0 +1,4 @@
+Clean dry studio narration only. No music, no sound effects, no ambience bed, no applause, no crowd.
+Language: Chinese.
+Narrator: adult, clear Mandarin, warm but professional instructor, medium-low pitch, calm and measured pace, precise diction, slight smile in the voice but never playful or dramatic.
+Read exactly: "{SCRIPT}"

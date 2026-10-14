@@ -1,0 +1,6 @@
+{
+  "name": "code-video-narration-tts",
+  "version": "0.4.0",
+  "description": "Dry Seed Audio narration TTS for coding tutorial videos (voice-lock route A).",
+  "author": { "name": "lyinet" }
+}

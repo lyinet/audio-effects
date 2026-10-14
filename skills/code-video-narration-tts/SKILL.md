@@ -10,6 +10,8 @@ description: >-
 
 仓库实现：`scripts/synthesize.py`；字段说明：`docs/API_SEED_AUDIO.md`；**长片音色一致**：`docs/VOICE_CONSISTENCY.md`；提示词：`prompts/`。
 
+Claude Code 安装后，命令示例一律用 `${CLAUDE_SKILL_DIR}`（指向含本 `SKILL.md` 的目录），不依赖当前 cwd。仓库内直接开发时可用相对路径 `scripts/synthesize.py`。
+
 ## 何时运行
 
 片子/分镜完成，需要旁白；或用户说配旁白 / TTS / SeedAudio / 音色不一致。
@@ -30,7 +32,7 @@ description: >-
 3. 教学旁白可设 `speech_rate=-15` 左右略慢；**全片同一语速/音量/音调**。
 4. 要对齐视频：`enable_subtitle=true`，保存返回的字级时间戳。
 5. **长片必锁音色**（二选一）：
-   - **推荐**：先 `--save-as-voice-lock` 短样本，后续每段 `--ref-audio` 同一文件；
+   - **推荐（路线 A）**：先 `--save-as-voice-lock` 短样本，后续每段 `--ref-audio` 同一文件；
    - 或全程 `--speaker=<豆包2.0/复刻ID>`，不要叠加参考音频。
 6. 念稿预处理：去舞台指示与 Markdown；`npm install`→「N-P-M install」等（脚本已做基础替换）。
 
@@ -39,17 +41,26 @@ description: >-
 密钥：`BYTEPLUS_SEED_API_KEY` 或 `VOLC_TTS_API_KEY`。
 
 ```bash
-# 短片单段
-python scripts/synthesize.py --text "旁白原文" --speech-rate -15 --subtitle
+# 短片单段（Claude 安装后）
+python "${CLAUDE_SKILL_DIR}/scripts/synthesize.py" --text "旁白原文" --speech-rate -15 --subtitle
 
-# 长片：锁声 → 多段 → 拼接
-python scripts/synthesize.py --text "这是本片统一的教学旁白音色锁定样本。" \
+# 长片：锁声 → 多段 → 拼接（路线 A）
+python "${CLAUDE_SKILL_DIR}/scripts/synthesize.py" --text "这是本片统一的教学旁白音色锁定样本。" \
   --save-as-voice-lock ./voice-refs/project-voice.mp3 --speech-rate -15
-python scripts/synthesize.py --file script.txt --ref-audio ./voice-refs/project-voice.mp3 \
-  --speech-rate -15 --out-dir ./narration-audio --concat
+python "${CLAUDE_SKILL_DIR}/scripts/synthesize.py" --file script.txt \
+  --ref-audio ./voice-refs/project-voice.mp3 --speech-rate -15 --out-dir ./narration-audio --concat
 ```
 
-无仓库检出时，按 `docs/API_SEED_AUDIO.md` / `docs/VOICE_CONSISTENCY.md` 用同一 JSON 自行请求。
+仓库检出、未装到 Claude skills 时，把 `${CLAUDE_SKILL_DIR}/scripts/synthesize.py` 换成 `scripts/synthesize.py`。也可按 `docs/API_SEED_AUDIO.md` / `docs/VOICE_CONSISTENCY.md` 用同一 JSON 自行请求。
+
+## 安装到 Claude Code
+
+```bash
+python scripts/install-claude-skill.py          # → ~/.claude/skills/code-video-narration-tts
+python scripts/install-claude-skill.py --scope project
+```
+
+详见 `dist/code-video-narration-tts/INSTALL_CLAUDE.md`。Claude app / Cowork **不会**读 `~/.claude/skills/`。
 
 ## 其它 provider
 

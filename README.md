@@ -7,19 +7,39 @@
 ## 仓库结构
 
 ```
-docs/
-  API_SEED_AUDIO.md                 # openspeech 官方接口对齐说明
-  VOICE_CONSISTENCY.md              # 长片参考音色锁一致性（必读）
-  TTS_PROMPTING_BEST_PRACTICES.md   # 三家模型提示词调研与对照表
-  MAINTENANCE.md                    # 维护说明
-prompts/                            # 可直接粘贴的旁白 style / 场景模板
-scripts/synthesize.py               # Seed Audio 干声合成 CLI（含 --ref-audio）
-skills/
-  code-video-narration-tts/SKILL.md # Cursor / Grok Bot 可复用技能
+docs/                               # API / 锁声 / 提示词 / 维护
+prompts/                            # 干声与参考锁模板
+scripts/
+  synthesize.py                     # Seed Audio CLI（--ref-audio / --concat）
+  install-claude-skill.py           # 一键装到 ~/.claude/skills/ 或项目
+  pack-claude-skill.py              # 重建 dist zip + 插件技能树
+skills/code-video-narration-tts/    # 技能源（SKILL.md）
+plugins/code-video-narration-tts/   # 可选 Claude Code 插件
+.claude-plugin/marketplace.json     # 本地 marketplace 清单
 dist/code-video-narration-tts-claude.zip
 .env.example
 CHANGELOG.md
 ```
+
+
+## 安装到 Claude Code（CLI）
+
+Claude app 无法跨目录安装本机 skills。用命令行装到 Claude Code：
+
+```bash
+# 仓库内
+python scripts/install-claude-skill.py
+
+# 或解压 dist zip 后
+python3 install-claude-skill.py
+# → 默认 ~/.claude/skills/code-video-narration-tts/
+```
+
+项目级：`python scripts/install-claude-skill.py --scope project`。详见包内 `INSTALL_CLAUDE.md`。
+
+**注意**：Claude Code 读取 `~/.claude/skills/`；Claude app / Cowork 云端**不会**读该目录（需 claude.ai 上传或项目内 `.claude/skills/`）。
+
+可选插件：`claude --plugin-dir plugins/code-video-narration-tts`，或本地 marketplace（见 `.claude-plugin/marketplace.json`）。
 
 ## 快速开始
 
